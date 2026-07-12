@@ -1,4 +1,4 @@
-package com.fincore.banking;
+package com.fincore;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
