@@ -1,14 +1,14 @@
 package com.fincore.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.Data;
 
-@AllArgsConstructor
-@NoArgsConstructor
+@Data
 @Builder
 public class AuthResponse {
     private String accessToken;
     private String tokenType;
     private String message;
+    private String email;
+    private String role;
 }

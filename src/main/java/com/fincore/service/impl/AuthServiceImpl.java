@@ -12,9 +12,14 @@ import com.fincore.exception.ResourceNotFoundException;
 import com.fincore.mapper.UserMapper;
 import com.fincore.repository.RoleRepository;
 import com.fincore.repository.UserRepository;
+import com.fincore.security.jwt.JwtService;
+import com.fincore.security.service.CustomUserDetailsService;
 import com.fincore.service.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -24,6 +29,9 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final UserMapper userMapper;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
+    private final CustomUserDetailsService userDetailsService;
 
     @Override
     public AuthResponse register(RegisterRequest request) {
@@ -50,6 +58,21 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse login(LoginRequest request) {
-        throw new UnsupportedOperationException("Login not implemented yet");
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+                request.getEmail(),
+                request.getPassword()
+                )
+        );
+        UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
+        String token = jwtService.generateToken(userDetails);
+        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(
+                () -> new ResourceNotFoundException("User not found"));
+        return AuthResponse.builder()
+                .accessToken(token)
+                .tokenType("Bearer")
+                .message(AppConstants.LOGIN_SUCCESSFUL)
+                .email(user.getEmail())
+                .role(user.getRole().getRoleName().name())
+                .build();
     }
 }
