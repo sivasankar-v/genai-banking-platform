@@ -2,12 +2,17 @@ package com.fincore.repository;
 
 import com.fincore.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 import java.util.UUID;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
-    Optional<User> findByEmail(String Email);
+    @Query("""
+            SELECT u FROM User u JOIN FETCH u.role WHERE u.email = :email
+            """)
+    Optional<User> findByEmail(@Param("email") String Email);
     Optional<User> findByMobileNumber(String mobileNumber);
     boolean existsByEmail(String email);
     boolean existsByMobileNumber(String mobileNumber);

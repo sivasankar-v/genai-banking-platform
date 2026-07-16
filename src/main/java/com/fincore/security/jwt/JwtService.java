@@ -36,7 +36,9 @@ public class JwtService {
 
     public boolean isTokenValid(String token, UserDetails userDetails){
         String username = extractUsername(token);
-        return extractExpiration(token).before(new Date());
+        System.out.println("Token Username: " + username);
+        System.out.println("Db username : " + userDetails.getUsername());
+        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
     private Date extractExpiration(String token){
@@ -55,5 +57,9 @@ public class JwtService {
     private SecretKey getSigningkey(){
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    private boolean isTokenExpired(String token){
+        return extractExpiration(token).before(new Date());
     }
 }
