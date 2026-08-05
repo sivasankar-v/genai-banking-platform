@@ -45,4 +45,9 @@ public class LoanController {
     public ResponseEntity<LoanResponse> rejectLoan(@PathVariable("loanid") UUID loanId) {
         return  ResponseEntity.ok(loanService.rejectLoan(loanId));
     }
+
+    @GetMapping
+    public ResponseEntity<List<LoanResponse>> getAllLoans() {
+        return ResponseEntity.ok(loanService.getAllLoans());
+    }
 }

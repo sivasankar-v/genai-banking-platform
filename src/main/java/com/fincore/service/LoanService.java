@@ -12,4 +12,5 @@ public interface LoanService {
     List<LoanResponse> getLoansByCustomer(UUID customerId);
     LoanResponse approveLoan(UUID loanId);
     LoanResponse rejectLoan(UUID loanId);
+    List<LoanResponse> getAllLoans();
 }

@@ -58,7 +58,7 @@ public class LoanServiceImpl implements LoanService {
     @Override
     public List<LoanResponse> getLoansByCustomer(UUID customerId) {
 
-        return loanRepository.findByCustomerId(customerId)
+        return loanRepository.findByCustomer_Id(customerId)
                 .stream()
                 .map(loanMapper::toResponse)
                 .toList();
@@ -103,5 +103,12 @@ public class LoanServiceImpl implements LoanService {
         double monthlyRate = interest.doubleValue()/(12 * 100);
         double emi = (principal.doubleValue() * monthlyRate * Math.pow(1 + monthlyRate, tenureMonths) - 1);
         return BigDecimal.valueOf(emi).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    public List<LoanResponse> getAllLoans(){
+        return loanRepository.findAll()
+                .stream()
+                .map(loanMapper::toResponse)
+                .toList();
     }
 }
