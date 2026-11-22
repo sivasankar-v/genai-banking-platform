@@ -18,7 +18,7 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    @Value("${jwt.expirtation}")
+    @Value("${jwt.expiration}")
     private long jwtExpiration;
 
     public String generateToken(UserDetails userDetails){
@@ -36,8 +36,6 @@ public class JwtService {
 
     public boolean isTokenValid(String token, UserDetails userDetails){
         String username = extractUsername(token);
-        System.out.println("Token Username: " + username);
-        System.out.println("Db username : " + userDetails.getUsername());
         return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 

@@ -10,6 +10,7 @@ import com.fincore.exception.ResourceNotFoundException;
 import com.fincore.mapper.BeneficiaryMapper;
 import com.fincore.repository.BeneficiaryRepository;
 import com.fincore.repository.CustomerRepository;
+import com.fincore.security.access.AccessGuard;
 import com.fincore.service.BeneficiaryService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -25,11 +26,13 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     private final BeneficiaryRepository beneficiaryRepository;
     private final CustomerRepository customerRepository;
     private final BeneficiaryMapper beneficiaryMapper;
+    private final AccessGuard accessGuard;
 
     @Override
     public BeneficiaryResponse addBeneficiary(AddBeneficiaryRequest request) {
         Customer customer = customerRepository.findById(request.getCustomerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Customer Not Found"));
+        accessGuard.checkCustomer(customer);
 
         if(beneficiaryRepository.existsByCustomerIdAndAccountNumber(request.getCustomerId(), request.getAccountNumber())) {
             throw new BusinessException("Beneficiary Already Exists");
@@ -48,7 +51,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
     @Override
     public BeneficiaryResponse updateBeneficiary(UUID id, UpdateBeneficiaryRequest request) {
-        Beneficiary beneficiary = beneficiaryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Beneficiary Not Found"));
+        Beneficiary beneficiary = findOwnedBeneficiary(id);
         beneficiary.setBeneficiaryName(request.getBeneficiaryName());
         beneficiary.setIfscCode(request.getIfscCode());
         beneficiary.setBankName(request.getBankName());
@@ -58,12 +61,22 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
     @Override
     public void deleteBeneficiary(UUID id) {
-        Beneficiary beneficiary = beneficiaryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Beneficiary Not Found"));
+        Beneficiary beneficiary = findOwnedBeneficiary(id);
         beneficiaryRepository.delete(beneficiary);
     }
 
     @Override
     public List<BeneficiaryResponse> getBeneficiariesByCustomerId(UUID id) {
+        Customer customer = customerRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Customer Not Found"));
+        accessGuard.checkCustomer(customer);
         return beneficiaryRepository.findByCustomerId(id).stream().map(beneficiaryMapper::toResponse).toList();
+    }
+
+    private Beneficiary findOwnedBeneficiary(UUID id) {
+        Beneficiary beneficiary = beneficiaryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Beneficiary Not Found"));
+        accessGuard.checkCustomer(beneficiary.getCustomer());
+        return beneficiary;
     }
 }

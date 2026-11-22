@@ -65,6 +65,11 @@ public class Customer {
     @Enumerated(EnumType.STRING)
     private CustomerStatus status;
 
+    // The login that owns this customer profile. Null for profiles created by an admin.
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", unique = true)
+    private User user;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -75,7 +80,7 @@ public class Customer {
     public void prePersist(){
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if(state == null){
+        if(status == null){
             status = CustomerStatus.ACTIVE;
         }
         if(kycStatus == null){

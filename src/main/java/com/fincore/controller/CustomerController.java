@@ -12,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -28,11 +29,17 @@ public class CustomerController {
         return customerService.createCustomer(request);
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<CustomerResponse> getMyCustomer(){
+        return ResponseEntity.ok(customerService.getMyCustomer());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<CustomerResponse> getCustomerById(@PathVariable UUID id){
         return ResponseEntity.ok(customerService.getCustomerById(id));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<Page<CustomerResponse>> getAllCustomers(
             @PageableDefault(
@@ -53,12 +60,14 @@ public class CustomerController {
         );
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCustomer(@PathVariable UUID id){
         customerService.deleteCustomer(id);
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/search")
     public ResponseEntity<Page<CustomerResponse>> searchCustomers(@RequestParam String keyword,
                                                                   @PageableDefault(
