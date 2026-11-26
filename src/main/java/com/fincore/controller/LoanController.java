@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.awt.*;
@@ -36,16 +37,19 @@ public class LoanController {
         return ResponseEntity.ok(loanService.getLoansByCustomer(customerId));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{loanId}/approve")
     public ResponseEntity<LoanResponse> approveLoan(@PathVariable("loanId") UUID loanId) {
         return  ResponseEntity.ok(loanService.approveLoan(loanId));
     }
 
-    @PatchMapping("{loanid}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/{loanid}/reject")
     public ResponseEntity<LoanResponse> rejectLoan(@PathVariable("loanid") UUID loanId) {
         return  ResponseEntity.ok(loanService.rejectLoan(loanId));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<LoanResponse>> getAllLoans() {
         return ResponseEntity.ok(loanService.getAllLoans());

@@ -15,6 +15,7 @@ import java.util.UUID;
 public interface CustomerService {
     CustomerResponse createCustomer(CreateCustomerRequest request);
     CustomerResponse getCustomerById(UUID id);
+    CustomerResponse getMyCustomer();
     Page<CustomerResponse> getAllCustomers(Pageable pageable);
     CustomerResponse updateCustomer(UUID id, UpdateCustomerRequest request);
     void deleteCustomer(UUID id);

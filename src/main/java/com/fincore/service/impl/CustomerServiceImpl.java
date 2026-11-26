@@ -10,6 +10,9 @@ import com.fincore.exception.ResourceAlreadyExistsException;
 import com.fincore.exception.ResourceNotFoundException;
 import com.fincore.mapper.CustomerMapper;
 import com.fincore.repository.CustomerRepository;
+import com.fincore.entity.User;
+import com.fincore.repository.UserRepository;
+import com.fincore.security.access.AccessGuard;
 import com.fincore.service.CustomerService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +29,9 @@ import java.util.UUID;
 public class CustomerServiceImpl implements CustomerService {
     private final CustomerRepository customerRepository;
     private final CustomerMapper customerMapper;
+    private final UserRepository userRepository;
+    private final AccessGuard accessGuard;
+
     @Override
     public CustomerResponse createCustomer(CreateCustomerRequest request) {
 
@@ -34,6 +40,16 @@ public class CustomerServiceImpl implements CustomerService {
         }
         Customer customer = customerMapper.toEntity(request);
         customer.setCustomerNumber(generateCustomerNumber());
+
+        // A customer creating a profile owns it. Admin-created profiles stay unlinked.
+        if (!accessGuard.isAdmin()) {
+            User user = userRepository.findByEmail(accessGuard.currentEmail())
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            if (customerRepository.existsByUserId(user.getId())) {
+                throw new ResourceAlreadyExistsException("You already have a customer profile");
+            }
+            customer.setUser(user);
+        }
         Customer savedCustomer = customerRepository.save(customer);
         return customerMapper.toResponse(savedCustomer);
     }
@@ -44,6 +60,15 @@ public class CustomerServiceImpl implements CustomerService {
         Customer customer = customerRepository.findById(id).orElseThrow(
                 () -> new ResourceNotFoundException("Customer not found with ID: " + id)
         );
+        accessGuard.checkCustomer(customer);
+        return customerMapper.toResponse(customer);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public CustomerResponse getMyCustomer() {
+        Customer customer = customerRepository.findByUserEmail(accessGuard.currentEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("No customer profile is linked to your login yet"));
         return customerMapper.toResponse(customer);
     }
 
@@ -59,9 +84,10 @@ public class CustomerServiceImpl implements CustomerService {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Customer not found with id: " + id));
+        accessGuard.checkCustomer(customer);
         //check duplicate mobile
         if(!customer.getMobile().equals(request.getMobile()) && customerRepository.existsByMobile(request.getMobile())){
-            throw new ResourceAlreadyExistsException("Mobil number already exists");
+            throw new ResourceAlreadyExistsException(AppConstants.MOBILE_ALREADY_EXISTS);
         }
         customerMapper.updateCustomer(customer, request);
         Customer updatedCustomer = customerRepository.save(customer);
@@ -89,7 +115,12 @@ public class CustomerServiceImpl implements CustomerService {
 
 
     private String generateCustomerNumber(){
-        long count = customerRepository.count() + 1;
-        return String.format("CUST%06d", count);
+        // count()+1 hands out the same number to two simultaneous requests; retry until free.
+        long next = customerRepository.count() + 1;
+        String number;
+        do {
+            number = String.format("CUST%06d", next++);
+        } while (customerRepository.existsByCustomerNumber(number));
+        return number;
     }
 }

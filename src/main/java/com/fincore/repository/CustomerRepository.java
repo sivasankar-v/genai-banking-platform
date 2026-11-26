@@ -15,6 +15,8 @@ public interface CustomerRepository extends JpaRepository<Customer, UUID> {
     Optional<Customer> findByMobile(String mobile);
     boolean existsByMobile(String mobile);
     boolean existsByCustomerNumber(String customerNumber);
+    boolean existsByUserId(UUID userId);
+    Optional<Customer> findByUserEmail(String email);
 
     @Query("""
 SELECT c from Customer c where lower(c.firstName) like lower(concat('%', :keyword, '%') )

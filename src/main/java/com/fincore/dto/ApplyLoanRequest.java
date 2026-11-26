@@ -2,6 +2,7 @@ package com.fincore.dto;
 
 import com.fincore.enums.LoanType;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -23,9 +24,7 @@ public class ApplyLoanRequest {
     @DecimalMin("1000.00")
     private BigDecimal principal;
     @NotNull
-    @DecimalMin("1.0")
-    private BigDecimal interest;
-    @NotNull
     @Min(1)
+    @Max(360)
     private Integer tenureMonths;
 }

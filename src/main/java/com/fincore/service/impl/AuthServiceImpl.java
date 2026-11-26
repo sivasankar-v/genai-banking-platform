@@ -35,7 +35,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse register(RegisterRequest request) {
-        if(userRepository.existsByEmail(request.getEmail())){
+        if(userRepository.existsByEmail(request.getEmail().toLowerCase().trim())){
             throw new ResourceAlreadyExistsException(
                     AppConstants.EMAIL_ALREADY_EXISTS);
         }
@@ -58,14 +58,12 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse login(LoginRequest request) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                request.getEmail(),
-                request.getPassword()
-                )
-        );
-        UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
+        String email = request.getEmail().toLowerCase().trim();
+        // Throws BadCredentialsException (answered as 401) on a wrong email or password.
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, request.getPassword()));
+        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
         String token = jwtService.generateToken(userDetails);
-        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(
+        User user = userRepository.findByEmail(email).orElseThrow(
                 () -> new ResourceNotFoundException("User not found"));
         return AuthResponse.builder()
                 .accessToken(token)
